@@ -1,0 +1,53 @@
+name: PR Rule Engine
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  run-rules:
+    name: Run PR Rules
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          echo "files=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD | tr '\n' ',')" >> $GITHUB_OUTPUT
+
+      - name: Build PR payload
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_BASE: ${{ github.event.pull_request.base.ref }}
+          PR_HEAD: ${{ github.event.pull_request.head.ref }}
+        run: |
+          python build_payload.py "${{ steps.changed-files.outputs.files }}"
+
+      - name: Run rule engine
+        run: python runner.py pr_payload.json
+        
+      - name: Log results to CSV
+        if: always()
+        run: python log_results.py pr_payload.json
+
+      - name: Commit log file to repo
+        if: always()
+        run: |
+          git config --global user.name "PR Rule Engine Bot"
+          git config --global user.email "bot@pr-rule-engine.com"
+          git add pr_check_log.csv
+          git diff --staged --quiet || git commit -m "log: PR #${{ github.event.pull_request.number }} check results"
+          git push
