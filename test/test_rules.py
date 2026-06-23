@@ -95,3 +95,83 @@ class TestRunner:
         rule_names = [r["rule"] for r in output["results"]]
         assert "pr-title-format" in rule_names
         assert "pr-size-check" in rule_names
+
+
+class TestLogWriter:
+
+    def _make_results(self, title="feat: test", num_files=2, passed=True):
+        files = [{"filename": f"f{i}.py", "content": ""} for i in range(num_files)]
+        return {
+            "passed": passed,
+            "ran_at": "2024-01-01 00:00:00 UTC",
+            "pr": {
+                "number": "42",
+                "title": title,
+                "author": "test-user",
+                "base": "main",
+                "head": "feat/test",
+                "files": files,
+            },
+            "results": [
+                {
+                    "rule": "pr-title-format",
+                    "passed": passed,
+                    "message": "✅ PR title is valid: 'feat: test'" if passed else "❌ Bad title",
+                },
+                {
+                    "rule": "pr-size-check",
+                    "passed": True,
+                    "message": f"✅ PR size is good: {num_files} file(s) changed.",
+                },
+            ],
+        }
+
+    def test_log_file_created(self, tmp_path):
+        import json
+        from log_writer import generate_log
+
+        results_file = tmp_path / "pr_results.json"
+        results_file.write_text(json.dumps(self._make_results()))
+        log_path = generate_log(str(results_file), output_dir=str(tmp_path / "logs"))
+        assert os.path.exists(log_path)
+
+    def test_log_contains_pr_metadata(self, tmp_path):
+        import json
+        from log_writer import generate_log
+
+        results_file = tmp_path / "pr_results.json"
+        results_file.write_text(json.dumps(self._make_results(title="feat: my feature")))
+        log_path = generate_log(str(results_file), output_dir=str(tmp_path / "logs"))
+        content = open(log_path).read()
+        assert "feat: my feature" in content
+        assert "test-user" in content
+        assert "42" in content
+
+    def test_log_shows_passed(self, tmp_path):
+        import json
+        from log_writer import generate_log
+
+        results_file = tmp_path / "pr_results.json"
+        results_file.write_text(json.dumps(self._make_results(passed=True)))
+        log_path = generate_log(str(results_file), output_dir=str(tmp_path / "logs"))
+        content = open(log_path).read()
+        assert "✅ PASSED" in content
+
+    def test_log_shows_failed(self, tmp_path):
+        import json
+        from log_writer import generate_log
+
+        results_file = tmp_path / "pr_results.json"
+        results_file.write_text(json.dumps(self._make_results(passed=False)))
+        log_path = generate_log(str(results_file), output_dir=str(tmp_path / "logs"))
+        content = open(log_path).read()
+        assert "❌ FAILED" in content
+
+    def test_log_filename_contains_pr_number(self, tmp_path):
+        import json
+        from log_writer import generate_log
+
+        results_file = tmp_path / "pr_results.json"
+        results_file.write_text(json.dumps(self._make_results()))
+        log_path = generate_log(str(results_file), output_dir=str(tmp_path / "logs"))
+        assert "pr_42_" in os.path.basename(log_path)
