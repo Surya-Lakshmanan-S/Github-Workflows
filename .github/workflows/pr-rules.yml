@@ -38,16 +38,4 @@ jobs:
 
       - name: Run rule engine
         run: python runner.py pr_payload.json
-        
-      - name: Log results to CSV
-        if: always()
-        run: python log_results.py pr_payload.json
-
-      - name: Commit log file to repo
-        if: always()
-        run: |
-          git config --global user.name "PR Rule Engine Bot"
-          git config --global user.email "bot@pr-rule-engine.com"
-          git add pr_check_log.csv
-          git diff --staged --quiet || git commit -m "log: PR #${{ github.event.pull_request.number }} check results"
-          git push
+```
