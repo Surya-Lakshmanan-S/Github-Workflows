@@ -42,4 +42,3 @@ if __name__ == "__main__":
     output = run_all_rules(pr_payload)
     print(json.dumps(output, indent=2))
     sys.exit(0 if output["passed"] else 1)
-```
