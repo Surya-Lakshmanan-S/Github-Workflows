@@ -11,6 +11,7 @@ That's it! ✅
 import json
 import sys
 from rules.rule_pr_title import check as rule_pr_title
+from rules.rule_pr_size import check as rule_pr_size
 
 # ─────────────────────────────────────────
 # RULE REGISTRY
@@ -18,6 +19,7 @@ from rules.rule_pr_title import check as rule_pr_title
 # ─────────────────────────────────────────
 RULES = [
     rule_pr_title,
+    rule_pr_size,
 ]
 
 
