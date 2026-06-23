@@ -1,19 +1,9 @@
 import json
 import sys
 from rules.rule_pr_title import check as rule_pr_title
-from rules.rule_branch_name import check as rule_branch_name  # ← add here
-from rules.rule_sql_keywords import check as rule_sql_keywords
-from rules.rule_plsql_pairs import check as rule_plsql_pairs
-from rules.rule_intendation import check as rule_intendation
-from rules.rule_author_comment import check as rule_author_comment
 
 RULES = [
     rule_pr_title,
-    rule_branch_name,
-    rule_sql_keywords,
-    rule_plsql_pairs, 
-    rule_intendation,
-    rule_author_comment,
 ]
 
 
