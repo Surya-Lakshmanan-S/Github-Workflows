@@ -38,4 +38,3 @@ jobs:
 
       - name: Run rule engine
         run: python runner.py pr_payload.json
-```
